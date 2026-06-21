@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Descrições Cirúrgicas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#F4F6F8;
+  --surface:#FFFFFF;
+  --ink:#14161B;
+  --ink-soft:#3A4049;
+  --muted:#6B7280;
+  --faint:#A6ACB6;
+  --line:#E7E9ED;
+  --line-strong:#D9DCE2;
+  --accent:#2D5BFF;
+  --accent-ink:#1E40D8;
+  --accent-wash:rgba(45,91,255,.09);
+  --hl-bg:#FFF1CC;
+  --hl-line:#E0A21A;
+  --ok:#1FA971;
+  --radius:14px;
+  --radius-sm:10px;
+  --shadow-card:0 1px 2px rgba(20,22,27,.04), 0 4px 16px rgba(20,22,27,.04);
+  --shadow-pop:0 8px 30px rgba(20,22,27,.12);
+  --cat-quadril:#2D5BFF;
+  --cat-joelho:#1FA971;
+  --cat-ombro:#0FB5C4;
+  --cat-trauma:#E5484D;
+  --cat-mao:#F2820E;
+  --cat-pe:#8B5CF6;
+  --cat-onco:#D6409F;
+  --cat-livre:#5B4B8A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  background:var(--canvas);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  line-height:1.5;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit}
+::selection{background:var(--accent-wash)}
+
+/* ---------- header ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(244,246,248,.82);
+  backdrop-filter:saturate(160%) blur(14px);
+  -webkit-backdrop-filter:saturate(160%) blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{
+  max-width:1160px;margin:0 auto;padding:0 24px;height:60px;
+  display:flex;align-items:center;gap:18px;
+}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink)}
+.mark{
+  width:30px;height:30px;border-radius:8px;flex:none;position:relative;
+  background:linear-gradient(135deg,#2D5BFF,#5B4B8A);
+  box-shadow:0 2px 8px rgba(45,91,255,.30);
+}
+.mark::before,.mark::after{content:"";position:absolute;background:#fff;border-radius:2px}
+.mark::before{width:3px;height:15px;left:50%;top:50%;transform:translate(-50%,-50%)}
+.mark::after{width:13px;height:3px;left:50%;top:50%;transform:translate(-50%,-50%)}
+.brand-name{font-weight:600;font-size:15px;letter-spacing:-.01em}
+.brand-sub{font-size:10.5px;color:var(--faint);font-weight:500;letter-spacing:.14em;text-transform:uppercase;margin-top:-2px}
+.spacer{flex:1}
+.beta-pill{
+  font-size:10px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--accent-ink);background:var(--accent-wash);
+  padding:4px 9px;border-radius:999px;border:1px solid rgba(45,91,255,.18);
+}
+.nav-links{display:flex;gap:4px}
+.nav-links a{
+  text-decoration:none;color:var(--muted);font-size:13.5px;font-weight:500;
+  padding:7px 12px;border-radius:8px;transition:background .16s,color .16s;
+}
+.nav-links a:hover{background:#fff;color:var(--ink)}
+
+/* ---------- screen plumbing ---------- */
+.screen{display:none}
+.screen.active{display:block;animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- list / hero ---------- */
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.hero{padding:46px 0 26px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:14px}
+.hero h1{font-size:40px;line-height:1.05;font-weight:600;letter-spacing:-.025em;max-width:18ch}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{margin-top:14px;color:var(--muted);font-size:16px;max-width:54ch}
+
+.searchrow{margin-top:30px;display:flex;flex-direction:column;gap:14px}
+.searchbox{position:relative;max-width:620px}
+.searchbox svg{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.searchbox input{
+  width:100%;height:54px;padding:0 18px 0 50px;font-size:16px;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;
+  color:var(--ink);box-shadow:var(--shadow-card);transition:border-color .16s,box-shadow .16s;
+}
+.searchbox input::placeholder{color:var(--faint)}
+.searchbox input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-wash)}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  font-size:13px;font-weight:500;color:var(--ink-soft);
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;display:inline-flex;align-items:center;gap:7px;
+  transition:border-color .16s,background .16s,color .16s,transform .12s;
+}
+.chip:hover{border-color:var(--line-strong)}
+.chip .d{width:8px;height:8px;border-radius:50%;background:var(--c,var(--faint))}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.on .d{box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.chip.all.on{background:var(--accent);border-color:var(--accent)}
+
+/* ---------- groups & cards ---------- */
+.groups{padding:14px 0 70px}
+.group{margin-top:34px}
+.group-head{display:flex;align-items:baseline;gap:12px;margin-bottom:15px}
+.group-head h2{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
+.group-head .rule{flex:1;height:1px;background:var(--line)}
+.group-head .cnt{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(264px,1fr));gap:14px}
+.card{
+  position:relative;text-align:left;width:100%;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 18px 16px;box-shadow:var(--shadow-card);
+  transition:transform .15s ease,border-color .15s,box-shadow .15s;
+  display:flex;flex-direction:column;gap:14px;min-height:104px;
+}
+.card:hover{transform:translateY(-3px);border-color:var(--cc,var(--accent));box-shadow:var(--shadow-pop)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card .top{display:flex;align-items:flex-start;gap:11px}
+.card .dot{width:10px;height:10px;border-radius:50%;background:var(--cc);margin-top:5px;flex:none;transition:transform .15s}
+.card:hover .dot{transform:scale(1.25)}
+.card .name{font-size:15.5px;font-weight:600;letter-spacing:-.01em;line-height:1.28}
+.card .meta{display:flex;align-items:center;gap:8px;margin-top:auto}
+.card .meta .k{
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
+  background:var(--canvas);border:1px solid var(--line);border-radius:6px;padding:2px 7px;
+}
+.card .meta .cat{font-size:11.5px;color:var(--faint);font-weight:500}
+.card .arrow{position:absolute;right:16px;bottom:15px;color:var(--faint);opacity:0;transform:translateX(-4px);transition:.15s}
+.card:hover .arrow{opacity:1;transform:none;color:var(--cc)}
+
+.empty{padding:60px 0;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-size:17px;font-weight:600;margin-bottom:6px}
+
+.footer{border-top:1px solid var(--line);padding:24px 0 50px;color:var(--faint);font-size:12.5px;display:flex;gap:6px;align-items:center}
+
+/* ---------- editor ---------- */
+.ed-bar{
+  position:sticky;top:60px;z-index:40;
+  background:rgba(244,246,248,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.ed-bar-inner{max-width:1160px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px}
+.back{
+  display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--ink-soft);
+  padding:8px 12px 8px 9px;border-radius:9px;transition:background .15s;
+}
+.back:hover{background:#fff}
+.ed-title{display:flex;align-items:center;gap:10px;min-width:0}
+.ed-title .dot{width:9px;height:9px;border-radius:50%;background:var(--cc);flex:none}
+.ed-title h2{font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toggle{display:inline-flex;background:var(--canvas);border:1px solid var(--line);border-radius:10px;padding:3px}
+.toggle button{font-size:13px;font-weight:500;color:var(--muted);padding:6px 13px;border-radius:7px;transition:.15s}
+.toggle button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.copy-btn{
+  display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#fff;
+  background:var(--accent);padding:10px 18px;border-radius:10px;
+  box-shadow:0 2px 10px rgba(45,91,255,.32);transition:background .15s,transform .1s,box-shadow .15s;
+}
+.copy-btn:hover{background:var(--accent-ink)}
+.copy-btn:active{transform:translateY(1px)}
+.copy-btn.done{background:var(--ok);box-shadow:0 2px 10px rgba(31,169,113,.32)}
+.copy-btn kbd{font-family:'DM Mono',monospace;font-size:10.5px;opacity:.8;background:rgba(255,255,255,.18);padding:1px 5px;border-radius:4px;font-weight:500}
+
+.split{max-width:1160px;margin:0 auto;padding:22px 24px 70px;display:grid;grid-template-columns:1fr 1.05fr;gap:22px;align-items:start}
+
+/* form panel */
+.panel-label{font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+.form{display:flex;flex-direction:column;gap:16px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.01em}
+.field input,.field select{
+  width:100%;height:42px;padding:0 13px;font-size:14px;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  transition:border-color .15s,box-shadow .15s;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pill{
+  font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 10px;
+  transition:.13s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent-ink)}
+.pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* preview panel */
+.preview-shell{position:sticky;top:130px}
+.note{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-card);overflow:hidden;
+}
+.note-head{
+  display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);
+  background:linear-gradient(var(--surface),var(--surface)) padding-box;
+}
+.note-head .dot{width:8px;height:8px;border-radius:50%;background:var(--cc);flex:none}
+.note-head .t{font-size:12.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.note-head .date{font-family:'DM Mono',monospace;font-size:11px;color:var(--faint)}
+.note-body{
+  padding:20px 22px 22px 26px;position:relative;
+  max-height:calc(100vh - 240px);overflow:auto;
+}
+.note-body::before{content:"";position:absolute;left:14px;top:16px;bottom:16px;width:2px;border-radius:2px;background:var(--cc);opacity:.28}
+.note-line{
+  font-family:'DM Mono',monospace;font-size:12.5px;line-height:1.85;color:var(--ink);
+  white-space:pre-wrap;word-break:break-word;
+}
+mark.hl{
+  background:var(--hl-bg);color:inherit;border-radius:3px;padding:.5px 3px;margin:0 -1px;
+  box-shadow:inset 0 -2px 0 var(--hl-line);transition:background .2s;
+}
+mark.hl.pulse{animation:pulse .5s ease}
+@keyframes pulse{0%{background:#FFE08A}60%{background:#FFE08A}100%{background:var(--hl-bg)}}
+
+.free-area{
+  width:100%;min-height:calc(100vh - 230px);resize:vertical;
+  font-family:'DM Mono',monospace;font-size:12.5px;line-height:1.85;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;box-shadow:var(--shadow-card);text-transform:uppercase;
+}
+.free-area:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
+.free-wrap{max-width:1160px;margin:0 auto;padding:22px 24px 70px}
+
+/* toast */
+.toast{
+  position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;font-size:14px;font-weight:500;
+  padding:12px 20px;border-radius:12px;box-shadow:var(--shadow-pop);
+  display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;z-index:80;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast svg{color:#4ADE80}
+
+@media (max-width:860px){
+  .hero h1{font-size:31px}
+  .split{grid-template-columns:1fr;gap:18px}
+  .preview-shell{position:static}
+  .note-body{max-height:none}
+  .ed-bar-inner{flex-wrap:wrap;gap:10px}
+  .ed-title{order:3;width:100%}
+  .free-area{min-height:60vh}
+}
+@media (max-width:560px){
+  .wrap,.split,.topbar-inner,.ed-bar-inner,.free-wrap{padding-left:16px;padding-right:16px}
+  .nav-links{display:none}
+  .grid{grid-template-columns:1fr}
+  .copy-btn kbd{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#" onclick="goHome();return false">
+      <span class="mark"></span>
+      <span>
+        <span class="brand-name">Descrições Cirúrgicas</span>
+        <span class="brand-sub">Ortopedia</span>
+      </span>
+    </a>
+    <span class="beta-pill">Beta</span>
+    <span class="spacer"></span>
+    <nav class="nav-links">
+      <a href="https://talesrobertosn.github.io/ortopediaresumos/">Resumos</a>
+      <a href="https://talesrobertosn.github.io/ortopocket/#/p/home">Encaminhar</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ SCREEN 1: LIST ============ -->
+<section id="screen-list" class="screen active">
+  <div class="wrap">
+    <div class="hero">
+      <div class="eyebrow">Gerador de descrição operatória</div>
+      <h1>Escolha, preencha, <em>copie</em>.</h1>
+      <p>Selecione a cirurgia, ajuste os campos variáveis e copie a descrição pronta em caixa alta para o prontuário.</p>
+      <div class="searchrow">
+        <div class="searchbox">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.6"/><path d="M14 14L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="search" type="text" placeholder="Buscar cirurgia, categoria ou técnica…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="filters" id="filters"></div>
+      </div>
+    </div>
+    <div class="groups" id="groups"></div>
+    <div class="footer">feito por Tales · descrições adicionadas continuamente</div>
+  </div>
+</section>
+
+<!-- ============ SCREEN 2: EDITOR ============ -->
+<section id="screen-editor" class="screen">
+  <div class="ed-bar">
+    <div class="ed-bar-inner">
+      <button class="back" onclick="goHome()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Voltar
+      </button>
+      <div class="ed-title"><span class="dot" id="ed-dot"></span><h2 id="ed-name"></h2></div>
+      <span class="spacer"></span>
+      <div class="toggle" id="toggle">
+        <button id="tab-campos" class="on" onclick="setMode('campos')">Campos</button>
+        <button id="tab-livre" onclick="setMode('livre')">Texto Livre</button>
+      </div>
+      <button class="copy-btn" id="copyBtn" onclick="copyText()">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2H4A1.5 1.5 0 0 0 2.5 3.5V11A1.5 1.5 0 0 0 4 12.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span id="copyLabel">Copiar</span><kbd>Ctrl ↵</kbd>
+      </button>
+    </div>
+  </div>
+
+  <div id="mode-campos" class="split">
+    <div class="panel-form">
+      <div class="panel-label">Campos</div>
+      <div class="form" id="form"></div>
+    </div>
+    <div class="preview-shell">
+      <div class="panel-label">Pré-visualização em tempo real</div>
+      <div class="note">
+        <div class="note-head"><span class="dot" id="pv-dot"></span><span class="t" id="pv-title"></span><span class="date" id="pv-date"></span></div>
+        <div class="note-body"><div class="note-line" id="preview"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mode-livre" class="free-wrap" style="display:none">
+    <div class="panel-label">Texto livre · tudo em caixa alta</div>
+    <textarea id="freeText" class="free-area" spellcheck="false"></textarea>
+  </div>
+</section>
+
+<div class="toast" id="toast">
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 9.5L7 13L14.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span id="toastMsg">Copiado para a área de transferência</span>
+</div>
+
+<script src="cirurgias.js"></script>
+<script>
+/* =========================================================================
+   MOTOR DO SITE — interpreta o formato de colchetes, gera campos e preview.
+   Nao precisa editar para adicionar cirurgias (isso e feito em cirurgias.js).
+   ========================================================================= */
+
+const CAT_ORDER = ['Quadril','Joelho','Ombro','Mao e Punho','Pe e Tornozelo','Trauma','Oncologia','Outros'];
+const CAT_LABEL = {'Quadril':'Quadril','Joelho':'Joelho','Ombro':'Ombro','Mao e Punho':'Mão e Punho','Pe e Tornozelo':'Pé e Tornozelo','Trauma':'Trauma','Oncologia':'Oncologia','Outros':'Outros'};
+const LABEL_DICT = {
+  lado:'Lado',anestesia:'Anestesia',dedo:'Dedo',haste:'Haste',decubito:'Decúbito',
+  posicao:'Posição',garrote:'Garrote',placa:'Placa',sindesmose:'Sindesmose',
+  metatarso:'Metatarso',calibre:'Calibre',offset:'Offset',cimento:'Cimento',
+  fio_pele:'Fio de pele',tendao:'Tendão',ancoras:'Âncoras',fileira:'Fileira',
+  gesso:'Gesso',volume:'Volume (mL)',fragmentos:'Fragmentos',local:'Local',
+  via:'Via de acesso',config:'Configuração',ulnar:'Nervo ulnar',olecrano:'Olécrano',
+  transposicao:'Transposição',raio:'Raio / dedo',tecnica:'Técnica',parafuso:'Parafuso',
+  tipo:'Tipo',montagem:'Montagem',schanz:'Pino de Schanz',subescapular:'Subescapular',
+  biceps:'Bíceps',reparo_sub:'Reparo subescapular',imobilizacao:'Imobilização',
+  fixacao:'Fixação',fixacao_medial:'Fixação medial',tamanho:'Tamanho',cabeca:'Cabeça',
+  acetabular:'Componente acetabular',fio_piriforme:'Fio do piriforme',
+  decubito_contra:'Decúbito (lado de apoio)',fio_reparo:'Fio do reparo',
+  fechamento:'Fechamento por planos',cefalico:'Parafuso cefálico',distal:'Bloqueio distal',
+  bloq_prox:'Parafusos proximais',bloq_distal:'Parafusos distais',femur:'Fêmur',
+  tibia:'Tíbia',liner:'Liner',dreno:'Dreno',valgo:'Valgo',rotacao:'Rotação externa',
+  corte_femoral:'Corte femoral',corte_tibial:'Corte tibial',parafusos:'Parafusos',
+  parafusos_lat:'Parafusos coluna lateral',parafusos_med:'Parafusos coluna medial',
+  parafusos_acetab:'Parafusos acetabulares',pinos_prox:'Pinos proximais',
+  pinos_dist:'Pinos distais',pinos_umero:'Pinos no úmero',pinos_ulna:'Pinos na ulna',
+  fios:'Fios de Kirschner',fios_radial:'Fios (estiloide radial)',fios_lister:'Fios (Lister)',
+  tenossinovectomia:'Tenossinovectomia'
+};
+
+function autoLabel(key){
+  if(LABEL_DICT[key]) return LABEL_DICT[key];
+  return key.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+function expandBlocks(text){
+  return text.replace(/\{\{(\w+)\}\}/g,(m,n)=> (window.BLOCOS&&window.BLOCOS[n]!=null)?window.BLOCOS[n]:m);
+}
+function parseBracket(inner){
+  let keyspec,optspec=null;
+  const pipe=inner.indexOf('|');
+  if(pipe>=0){keyspec=inner.slice(0,pipe).trim();optspec=inner.slice(pipe+1);}
+  else keyspec=inner.trim();
+  let key=keyspec,label=null;const eq=keyspec.indexOf('=');
+  if(eq>=0){key=keyspec.slice(0,eq).trim();label=keyspec.slice(eq+1).trim();}
+  if(optspec==null) return {key,field:null};
+  const raw=optspec.trim();
+  const field={key,label:label||autoLabel(key)};
+  if(raw[0]==='#'){field.type='number';field.default=raw.slice(1).trim();}
+  else if(raw[0]==='~'){field.type='text';field.default=raw.slice(1).trim();}
+  else if(raw[0]==='+'){field.type='text';field.pills=raw.slice(1).split(',').map(s=>s.trim()).filter(Boolean);field.default=field.pills[0]||'';}
+  else if(raw.includes(',')){field.type='select';field.options=raw.split(',').map(s=>s.trim());field.default=field.options[0];}
+  else {field.type='text';field.default=raw;}
+  return {key,field};
+}
+function parseCorpo(corpo){
+  const expanded=expandBlocks((corpo||'').replace(/^\n/,'').replace(/\n$/,''));
+  const lines=expanded.split('\n');
+  const fields=[],fieldMap={};
+  const parsedLines=lines.map(line=>{
+    const segs=[];const re=/\[\[([^\]]+)\]\]/g;let m,last=0;
+    while((m=re.exec(line))){
+      if(m.index>last) segs.push({t:'text',v:line.slice(last,m.index)});
+      const {key,field}=parseBracket(m[1]);
+      if(field&&!fieldMap[key]){fieldMap[key]=field;fields.push(field);}
+      segs.push({t:'field',key});
+      last=m.index+m[0].length;
+    }
+    if(last<line.length) segs.push({t:'text',v:line.slice(last)});
+    return segs;
+  });
+  return {fields,parsedLines,fieldMap};
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function renderPlain(parsed,values){
+  const out=[];
+  for(const segs of parsed.parsedLines){
+    let plain='';
+    for(const s of segs) plain += s.t==='text'? s.v : (values[s.key]??'');
+    if(plain.trim()==='') continue;
+    out.push(plain.replace(/[ \t]+/g,' ').trim());
+  }
+  return out.join('\n');
+}
+function renderHtml(parsed,values){
+  const out=[];
+  for(const segs of parsed.parsedLines){
+    let plain='',html='';
+    for(const s of segs){
+      if(s.t==='text'){plain+=s.v;html+=esc(s.v);}
+      else{const v=values[s.key]??'';plain+=v;if(v.trim())html+=`<mark class="hl" data-k="${s.key}">${esc(v)}</mark>`;}
+    }
+    if(plain.trim()==='') continue;
+    out.push(html);
+  }
+  return out.join('\n');
+}
+
+/* ---------------- state ---------------- */
+let activeCat='all';
+let current=null;      // {surgery, parsed, values}
+let mode='campos';
+
+/* ---------------- list screen ---------------- */
+function buildFilters(){
+  const cats=['all',...CAT_ORDER.filter(c=>SURGERIES.some(s=>s.category===c))];
+  const el=document.getElementById('filters');
+  el.innerHTML=cats.map(c=>{
+    if(c==='all') return `<button class="chip all on" data-cat="all">Todas</button>`;
+    const color=SURGERIES.find(s=>s.category===c).color;
+    return `<button class="chip" data-cat="${c}" style="--c:var(--cat-${color})"><span class="d"></span>${CAT_LABEL[c]}</button>`;
+  }).join('');
+  el.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{
+    activeCat=ch.dataset.cat;
+    el.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===ch));
+    renderList();
+  });
+}
+function renderList(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const root=document.getElementById('groups');
+  let html='',total=0;
+  for(const cat of CAT_ORDER){
+    let items=SURGERIES.filter(s=>s.category===cat);
+    if(activeCat!=='all') items=items.filter(s=>s.category===activeCat);
+    if(q) items=items.filter(s=>(s.name+' '+CAT_LABEL[s.category]).toLowerCase().includes(q));
+    if(!items.length) continue;
+    total+=items.length;
+    html+=`<div class="group"><div class="group-head"><h2>${CAT_LABEL[cat]}</h2><div class="rule"></div><span class="cnt">${items.length}</span></div><div class="grid">`;
+    for(const s of items){
+      const n = s.freeOnly?0:parseCorpo(s.corpo).fields.length;
+      const meta = s.freeOnly?`<span class="cat">edição manual completa</span>`
+        :`<span class="k">${n} ${n===1?'campo':'campos'}</span><span class="cat">${CAT_LABEL[s.category]}</span>`;
+      html+=`<button class="card" style="--cc:var(--cat-${s.color})" onclick="openSurgery('${s.id}')">
+        <div class="top"><span class="dot"></span><span class="name">${s.name}</span></div>
+        <div class="meta">${meta}</div>
+        <span class="arrow"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 4L11 9L6 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </button>`;
+    }
+    html+=`</div></div>`;
+  }
+  if(!total) html=`<div class="empty"><strong>Nenhuma descrição encontrada</strong>Tente outro termo ou limpe os filtros.</div>`;
+  root.innerHTML=html;
+}
+
+/* ---------------- editor ---------------- */
+function openSurgery(id){
+  const s=SURGERIES.find(x=>x.id===id);if(!s)return;
+  const parsed=parseCorpo(s.corpo);
+  const values={};parsed.fields.forEach(f=>values[f.key]=f.default);
+  current={surgery:s,parsed,values};
+  document.getElementById('ed-name').textContent=s.name;
+  document.getElementById('pv-title').textContent=s.name;
+  document.getElementById('ed-dot').style.background=`var(--cat-${s.color})`;
+  document.getElementById('pv-dot').style.background=`var(--cat-${s.color})`;
+  document.querySelector('.note-body').parentElement.style.setProperty('--cc',`var(--cat-${s.color})`);
+  document.getElementById('mode-campos').style.setProperty('--cc',`var(--cat-${s.color})`);
+  document.querySelector('.note').style.setProperty('--cc',`var(--cat-${s.color})`);
+  document.getElementById('pv-date').textContent=new Date().toLocaleDateString('pt-BR');
+  buildForm();
+  refreshPreview();
+  // free-only surgeries skip the toggle
+  const isFree=!!s.freeOnly;
+  document.getElementById('toggle').style.display=isFree?'none':'';
+  setMode(isFree?'livre':'campos',true);
+  show('screen-editor');
+  window.scrollTo(0,0);
+  history.replaceState(null,'',`?c=${id}`);
+}
+function buildForm(){
+  const f=document.getElementById('form');
+  if(!current.parsed.fields.length){f.innerHTML=`<p style="color:var(--muted);font-size:14px">Esta descrição não tem campos — use o modo Texto Livre.</p>`;return;}
+  f.innerHTML=current.parsed.fields.map(fl=>{
+    const v=current.values[fl.key];
+    if(fl.type==='select'){
+      const opts=fl.options.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${o===''?'—':esc(o)}</option>`).join('');
+      return `<div class="field"><label>${fl.label}</label><select data-k="${fl.key}">${opts}</select></div>`;
+    }
+    const inputType=fl.type==='number'?'inputmode="numeric"':'';
+    let pills='';
+    if(fl.pills){pills=`<div class="pills">${fl.pills.map(p=>`<button type="button" class="pill${p===v?' on':''}" data-k="${fl.key}" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div>`;}
+    return `<div class="field"><label>${fl.label}</label><input type="text" ${inputType} data-k="${fl.key}" value="${esc(v??'')}">${pills}</div>`;
+  }).join('');
+  f.querySelectorAll('select,input').forEach(el=>{
+    el.addEventListener('input',()=>{onValue(el.dataset.k,el.value);syncPills(el.dataset.k);});
+  });
+  f.querySelectorAll('.pill').forEach(p=>{
+    p.addEventListener('click',()=>{
+      const k=p.dataset.k,val=p.dataset.v;
+      const inp=f.querySelector(`input[data-k="${k}"]`);if(inp)inp.value=val;
+      onValue(k,val);syncPills(k);
+    });
+  });
+}
+function syncPills(key){
+  const v=current.values[key];
+  document.querySelectorAll(`.pill[data-k="${key}"]`).forEach(p=>p.classList.toggle('on',p.dataset.v===v));
+}
+function onValue(key,val){
+  current.values[key]=val;
+  refreshPreview(key);
+}
+function refreshPreview(changedKey){
+  const html=renderHtml(current.parsed,current.values);
+  const pv=document.getElementById('preview');
+  pv.innerHTML=html||'<span style="color:var(--faint)">—</span>';
+  if(changedKey){
+    pv.querySelectorAll(`mark[data-k="${changedKey}"]`).forEach(m=>{
+      m.classList.add('pulse');setTimeout(()=>m.classList.remove('pulse'),500);
+    });
+  }
+}
+function plainText(){
+  if(mode==='livre') return document.getElementById('freeText').value;
+  return renderPlain(current.parsed,current.values);
+}
+function setMode(m,silent){
+  mode=m;
+  document.getElementById('tab-campos').classList.toggle('on',m==='campos');
+  document.getElementById('tab-livre').classList.toggle('on',m==='livre');
+  document.getElementById('mode-campos').style.display=m==='campos'?'':'none';
+  document.getElementById('mode-livre').style.display=m==='livre'?'':'none';
+  if(m==='livre'){
+    const ta=document.getElementById('freeText');
+    // preencher com o texto gerado ate o momento (se vier dos campos)
+    if(!silent || !ta.value.trim()) ta.value=renderPlain(current.parsed,current.values);
+    ta.oninput=()=>{const p=ta.selectionStart;ta.value=ta.value.toUpperCase();ta.setSelectionRange(p,p);};
+  }
+}
+
+/* ---------------- copy / toast ---------------- */
+async function copyText(){
+  const txt=plainText();
+  try{await navigator.clipboard.writeText(txt);}
+  catch(e){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+  const btn=document.getElementById('copyBtn'),lbl=document.getElementById('copyLabel');
+  btn.classList.add('done');lbl.textContent='Copiado!';
+  toast('Descrição copiada para a área de transferência');
+  setTimeout(()=>{btn.classList.remove('done');lbl.textContent='Copiar';},2000);
+}
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* ---------------- navigation ---------------- */
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));}
+function goHome(){show('screen-list');history.replaceState(null,'','./');window.scrollTo(0,0);}
+
+document.getElementById('search').addEventListener('input',renderList);
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&document.getElementById('screen-editor').classList.contains('active')){e.preventDefault();copyText();}
+  if(e.key==='Escape'&&document.getElementById('screen-editor').classList.contains('active')){goHome();}
+});
+
+/* ---------------- boot ---------------- */
+buildFilters();renderList();
+const params=new URLSearchParams(location.search);
+if(params.get('c')&&SURGERIES.some(s=>s.id===params.get('c'))) openSurgery(params.get('c'));
+</script>
+</body>
+</html>
